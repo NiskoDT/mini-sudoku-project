@@ -147,10 +147,18 @@ int is_valid(int a[N][N], int r, int c, int v) {
   return 1;
 }
 
-/* solver that counts solutions up to limit */
+/**
+ * A recursive solver that counts solutions up to a given limit.
+ * @param board The Sudoku board to solve.
+ * @param limit The maximum number of solutions to count.
+ * @param count A pointer to an integer that stores the count of solutions.
+ * @return The count of solutions (up to the limit).
+ */
 int solve_count_recursive(int board[N][N], int limit, int *count) {
+  /* If the count has already reached the limit, stop counting */
   if (*count >= limit) return *count;
 
+  /* Find an empty cell in the board */
   int row = -1, col = -1;
   for (int i=0; i<N; i++) {
     for (int j=0; j<N; j++) {
@@ -159,11 +167,13 @@ int solve_count_recursive(int board[N][N], int limit, int *count) {
     if (row != -1) break;
   }
 
+  /* If all cells are filled, increment the count */
   if (row == -1) { 
     (*count)++; 
     return *count; 
   }
 
+  /* Try all possible values for the empty cell */
   for (int v=1; v<=N; v++) {
     if (is_valid(board, row, col, v)) {
       board[row][col] = v;
@@ -181,38 +191,149 @@ int solve_count_recursive(int board[N][N], int limit, int *count) {
 int count_solutions(int a[N][N], int limit) {
   int tmp[N][N];
   copy_board(tmp, a);
+
   int cnt = 0;
   solve_count_recursive(tmp, limit, &cnt);
+  
   return cnt;
 }
 
 /* simple transformations that preserve solution validity */
-void swap_rows(int a[N][N], int r1, int r2) {
-  for (int c=0;c<N;c++) { int t=a[r1][c]; a[r1][c]=a[r2][c]; a[r2][c]=t; }
-}
-void swap_cols(int a[N][N], int c1, int c2) {
-  for (int r=0;r<N;r++) { int t=a[r][c1]; a[r][c1]=a[r][c2]; a[r][c2]=t; }
-}
-void transpose_board(int a[N][N]) {
-  for (int i=0;i<N;i++) for (int j=i+1;j<N;j++) { int t=a[i][j]; a[i][j]=a[j][i]; a[j][i]=t; }
-}
-void swap_row_blocks(int a[N][N], int b1, int b2) {
-  for (int i=0;i<BLOCK;i++) swap_rows(a, b1*BLOCK + i, b2*BLOCK + i);
-}
-void swap_col_blocks(int a[N][N], int b1, int b2) {
-  for (int i=0;i<BLOCK;i++) swap_cols(a, b1*BLOCK + i, b2*BLOCK + i);
-}
-
-void randomize_solution(int a[N][N]) {
-  for (int it=0; it<50; it++) {
-    int t = rand()%5;
-    if (t==0) { int band=rand()%BLOCK; int r1=band*BLOCK + rand()%BLOCK; int r2=band*BLOCK + rand()%BLOCK; if (r1!=r2) swap_rows(a,r1,r2); }
-    else if (t==1) { int band=rand()%BLOCK; int c1=band*BLOCK + rand()%BLOCK; int c2=band*BLOCK + rand()%BLOCK; if (c1!=c2) swap_cols(a,c1,c2); }
-    else if (t==2) { int b1=rand()%BLOCK, b2=rand()%BLOCK; if (b1!=b2) swap_row_blocks(a,b1,b2); }
-    else if (t==3) { int b1=rand()%BLOCK, b2=rand()%BLOCK; if (b1!=b2) swap_col_blocks(a,b1,b2); }
-    else { if (rand()%3==0) transpose_board(a); }
+void swapRows(int board[N][N], int row1, int row2) {
+  for (int col = 0; col < N; col++) {
+    int temp = board[row1][col];
+    board[row1][col] = board[row2][col];
+    board[row2][col] = temp;
   }
 }
+
+void swapCols(int board[N][N], int col1, int col2) {
+  for (int row = 0; row < N; row++) {
+    int temp = board[row][col1];
+    board[row][col1] = board[row][col2];
+    board[row][col2] = temp;
+  }
+}
+
+void transposeBoard(int board[N][N]) {
+  for (int row = 0; row < N; row++) {
+    for (int col = row + 1; col < N; col++) {
+      int temp = board[row][col];
+      board[row][col] = board[col][row];
+      board[col][row] = temp;
+    }
+  }
+}
+
+void swapRowBlocks(int board[N][N], int block1, int block2) {
+  for (int i = 0; i < BLOCK; i++) {
+    swapRows(board, block1 * BLOCK + i, block2 * BLOCK + i);
+  }
+}
+
+void swapColBlocks(int board[N][N], int block1, int block2) {
+  for (int i = 0; i < BLOCK; i++) {
+    swapCols(board, block1 * BLOCK + i, block2 * BLOCK + i);
+  }
+}
+
+/**
+ * Randomly transforms a Sudoku board in order to generate a unique
+ * puzzle. The transformations are chosen randomly from the following
+ * set: swapping two rows in the same block, swapping two columns in
+ * the same block, swapping two blocks of rows, swapping two blocks of
+ * columns, transposing the board. The number of transformations is
+ * fixed at 50.
+ * @param board The Sudoku board to transform.
+ */
+void randomizeSolution(int board[N][N]) {
+  const int iterations = 50;
+  const int transformations = 5;
+
+  for (int iteration = 0; iteration < iterations; iteration++) {
+    int transformation = rand() % transformations;
+
+    switch (transformation) {
+      /* 
+       * Swap two rows in the same block.
+       * The block is chosen randomly, and the two rows are chosen
+       * randomly from within that block.
+       */
+      case 0: {
+        int block = rand() % BLOCK;
+        int row1 = block * BLOCK + rand() % BLOCK;
+        int row2 = block * BLOCK + rand() % BLOCK;
+
+        if (row1 != row2) {
+          swapRows(board, row1, row2);
+        }
+        break;
+      }
+
+      /* 
+       * Swap two columns in the same block.
+       * The block is chosen randomly, and the two columns are chosen
+       * randomly from within that block.
+       */
+      case 1: {
+        int block = rand() % BLOCK;
+        int col1 = block * BLOCK + rand() % BLOCK;
+        int col2 = block * BLOCK + rand() % BLOCK;
+
+        if (col1 != col2) {
+          swapCols(board, col1, col2);
+        }
+        break;
+      }
+
+      /* 
+       * Swap two blocks of rows.
+       * The two blocks are chosen randomly, and all rows in the first
+       * block are swapped with all rows in the second block.
+       */
+      case 2: {
+        int block1 = rand() % BLOCK;
+        int block2 = rand() % BLOCK;
+
+        if (block1 != block2) {
+          swapRowBlocks(board, block1, block2);
+        }
+        break;
+      }
+
+      /* 
+       * Swap two blocks of columns.
+       * The two blocks are chosen randomly, and all columns in the first
+       * block are swapped with all columns in the second block.
+       */
+      case 3: {
+        int block1 = rand() % BLOCK;
+        int block2 = rand() % BLOCK;
+
+        if (block1 != block2) {
+          swapColBlocks(board, block1, block2);
+        }
+        break;
+      }
+
+      /* 
+       * Transpose the board.
+       * This transformation swaps the rows and columns of the board.
+       */
+      case 4: {
+        if (rand() % 3 == 0) {
+          transposeBoard(board);
+        }
+        break;
+      }
+
+      /* 
+       * No transformation is done for this iteration.
+       */
+      default:
+        break;
+    }
+  }
 
 /* generator: remove cells while keeping unique solution */
 void generate_puzzle(int a[N][N], int blanks) {
