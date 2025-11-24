@@ -1,8 +1,8 @@
-/* sudoku4_play.c
-   4x4 Sudoku generator + interactive player
-   Compile: gcc -O2 sudoku4_play.c -o sudoku4_play
-   Run:     ./sudoku4_play 6   (arg = jumlah blanks, default 6)
-*/
+/*
+ * 4x4 Sudoku generator + interactive player
+ * Compile: gcc -O2 sudoku4_play.c -o sudoku4_play
+ * Run:     ./sudoku4_play 6   (arg = jumlah blanks, default 6)
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,41 +40,80 @@ void copy_board(int dst[N][N], int src[N][N]) {
  * @param a The 4x4 Sudoku board to print.
  */
 void print_board(int a[N][N]) {
-  /* Print the top line of the board */
-  puts("   1 2   3 4");
-  puts("  +-----+-----+");
+  /* 
+   * Print the top line of the board, with column numbers.
+   * This is the line that will be displayed above the board.
+   */
+  printf("    1  2   3  4\n");
+  printf("  +------+------+\n");
 
-  /* Print each row of the board */
+  /* 
+   * Print each row of the board.
+   * For each row, print the row number, followed by the values in the row.
+   * A '|' is displayed at the end of each row.
+   */
   for (int i=0; i<N; i++) {
+    /* 
+     * Print the row number.
+     * This is the number that will be displayed to the left of the row.
+     */
     printf("%d |", i+1);
 
-    /* Print each value in the row */
+    /* 
+     * Print each value in the row.
+     * If the value is 0, print a '.', otherwise print the value.
+     * A space is displayed after each value.
+     * A '|' is displayed after the second value in the row.
+     */
     for (int j=0; j<N; j++) {
-      /* If the value is 0, print a '.', otherwise print the value */
       if (a[i][j] == 0) { 
-        putchar('.');
+        /* 
+         * Print a '.' if the value is 0.
+         * This indicates that the value has not been set yet.
+         */
+        printf(" .");
       }
       else { 
-        putchar('0' + a[i][j]);
+        /* 
+         * Print the value if it is not 0.
+         * This is the actual value that has been set in the Sudoku board.
+         */
+        printf(" %d", a[i][j]);
       }
       
-      /* If we're not at the end of the row, print a space */
+      /* 
+       * If we're not at the end of the row, print a space.
+       * This is to separate the values in the row.
+       */
       if (j != N-1 ) {
-        putchar(' ');
+        printf(" ");
       }
       
-      /* If we're at the middle of the row, print a '|' */
+      /* 
+       * If we're at the middle of the row, print a '|'.
+       * This is to separate the two 2x2 blocks in the board.
+       */
       if ( j == 1 ) {
-        putchar('|');
+        printf("|");
       }
     }
-    printf("|\n");
+    printf(" |\n");
 
-    /* If we're at the middle of the board, print a '+' */
-    if (i==1) puts("  +-----+-----+");
+    /* 
+     * If we're at the middle of the board, print a '+'.
+     * This is to separate the two 2x2 blocks in the board.
+     */
+    if (i==1) {
+      printf("  +------+------+\n");
+    }
   }
-  /* Print the bottom line of the board */
-  puts("  +-----+-----+");
+  /* 
+   * Print the bottom line of the board.
+   * This is the line that will be displayed below the board.
+   */
+  printf("  +------+------+\n");
+
+  return;
 }
 
 /**
