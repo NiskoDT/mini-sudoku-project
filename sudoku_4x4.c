@@ -1,7 +1,7 @@
 /*
  * 4x4 Sudoku generator + interactive player
- * Compile: gcc -O2 sudoku4_play.c -o sudoku4_play
- * Run:     ./sudoku4_play 6   (arg = jumlah blanks, default 6)
+ * Compile: gcc -O2 -Wall -Wextra '.\sudoku_4x4.c' -o .\sudoku.exe
+ * Run:     ./sudoku.exe 6   (arg = jumlah blanks, default 6)
  */
 
 #include <stdio.h>
@@ -147,7 +147,25 @@ int is_valid(int a[N][N], int r, int c, int v) {
   return 1;
 }
 
-/* solver that counts solutions up to limit */
+/* 
+ * Solve a Sudoku board by counting the number of valid solutions up to a given limit.
+ * This function works by making a temporary copy of the Sudoku board,
+ * and then calling solve_count_recursive to do the actual counting.
+ *
+ * The solve_count_recursive function is a recursive function that tries
+ * placing each valid value in each empty cell of the board, and then
+ * recursively tries to fill in the rest of the board. If the board
+ * is completely filled, it increments the solution count.
+ *
+ * The limit parameter is used to stop counting solutions once we've found
+ * the desired number of solutions. This is useful if we only want to know
+ * if there is one solution, or if there are multiple solutions.
+ *
+ * @param board The Sudoku board to count solutions for.
+ * @param limit The maximum number of solutions to count.
+ * @param count A pointer to an integer that will be incremented for each solution found.
+ * @return The number of solutions found, up to limit.
+ */
 int solve_count_recursive(int board[N][N], int limit, int *count) {
   if (*count >= limit) return *count;
 
@@ -160,6 +178,10 @@ int solve_count_recursive(int board[N][N], int limit, int *count) {
   }
 
   if (row == -1) { 
+    /* 
+     * If we've reached the end of the board without finding any empty cells,
+     * then we've found a valid solution. Increment the solution count.
+     */
     (*count)++; 
     return *count; 
   }
@@ -323,10 +345,22 @@ void swap_col_blocks(int a[N][N], int b1, int b2) {
   }
 }
 
+/**
+ * Randomly transforms a Sudoku solution in order to generate a new unique solution.
+ * The transformations used are row swaps, column swaps, block swaps of rows, block swaps of columns, and transposing the board.
+ * This function is used to generate a new unique solution to the Sudoku puzzle.
+ * The number of transformations is fixed to 50.
+ * @param a The Sudoku solution to be transformed.
+ */
 void randomize_solution(int a[N][N]) {
   for (int it=0; it<50; it++) {
     int t = rand()%5;
 
+    /*
+     * Transformation 0: swap two rows in the same block.
+     * This transformation is done by generating two random row indices within the same block,
+     * and swapping the corresponding rows of the Sudoku board.
+     */
     if (t == 0) { 
       int band=rand()%BLOCK; 
       int r1 = band*BLOCK + rand() % BLOCK; 
@@ -336,14 +370,25 @@ void randomize_solution(int a[N][N]) {
         swap_rows(a,r1,r2); 
       }
     }
+    /*
+     * Transformation 1: swap two columns in the same block.
+     * This transformation is done by generating two random column indices within the same block,
+     * and swapping the corresponding columns of the Sudoku board.
+     */
     else if (t == 1) { 
       int band=rand()%BLOCK; 
       int c1 = band * BLOCK + rand() % BLOCK; 
       int c2 = band * BLOCK + rand() % BLOCK; 
       
       if (c1 != c2) {
-        swap_cols(a,c1,c2); }
+        swap_cols(a,c1,c2); 
+      }
     }
+    /*
+     * Transformation 2: swap two blocks of rows.
+     * This transformation is done by generating two random block indices, and
+     * swapping the corresponding blocks of rows in the Sudoku board.
+     */
     else if (t == 2) { 
       int b1 = rand() % BLOCK, b2 = rand() % BLOCK; 
       
@@ -351,6 +396,11 @@ void randomize_solution(int a[N][N]) {
         swap_row_blocks(a, b1, b2); 
       }
     }
+    /*
+     * Transformation 3: swap two blocks of columns.
+     * This transformation is done by generating two random block indices, and
+     * swapping the corresponding blocks of columns in the Sudoku board.
+     */
     else if (t == 3) { 
       int b1 = rand() % BLOCK, b2 = rand() % BLOCK; 
       
@@ -358,45 +408,134 @@ void randomize_solution(int a[N][N]) {
         swap_col_blocks(a, b1, b2); 
       }
     }
+    /*
+     * Transformation 4: transpose the Sudoku board.
+     * This transformation is done by swapping the rows and columns of the Sudoku board.
+     */
     else { 
       if (rand() % 3 == 0) {
-        transpose_board(a); }
+        transpose_board(a); 
+      }
     }
   }
 }
 
-
-/* generator: remove cells while keeping unique solution */
+/**
+ * Generate a Sudoku puzzle by removing cells from a full solution while keeping a unique solution.
+ * The function takes a Sudoku board and a number of blanks, and removes cells from the board
+ * while ensuring that the resulting board has a unique solution.
+ * @param a The Sudoku board to modify.
+ * @param blanks The number of blanks to remove from the board.
+ */
 void generate_puzzle(int a[N][N], int blanks) {
+  /* initialize an array of positions to shuffle */
   int pos[16];
-  for (int i=0;i<16;i++) pos[i]=i;
-  for (int i=15;i>0;i--) {
-    int j = rand()%(i+1);
-    int t = pos[i]; pos[i]=pos[j]; pos[j]=t;
+
+  /* initialize the array of positions */
+  for ( int i = 0; i < 16; i++ ) {
+    pos[i] = i;
   }
 
+  /* shuffle the array of positions */
+  for ( int i = 15; i > 0; i-- ) {
+    int j = rand() % ( i + 1 );
+    int t = pos[i];
+    
+    pos[i] = pos[j];
+    pos[j] = t;
+  }
+
+  /* count the number of cells removed */
   int removed = 0;
-  for (int k=0; k<16 && removed < blanks; k++) {
+
+  /* loop over the shuffled positions and remove cells while keeping a unique solution */
+  for ( int k = 0; k < 16 && removed < blanks; k++ ) {
     int p = pos[k];
     int r = p / N, c = p % N;
-    if (a[r][c]==0) continue;
+
+    /* skip over empty cells */
+    if ( a[r][c] == 0) {
+      continue;
+    }
+
+    /* save the value of the cell before removing it */
     int saved = a[r][c];
     a[r][c]=0;
+    
+    /* count the number of solutions to the board after removing the cell */
     int sols = count_solutions(a, 2); /* only care >1 */
-    if (sols != 1) a[r][c]=saved; else removed++;
+    /* if the number of solutions is not 1, then restore the cell */
+    if ( sols != 1) {
+      a[r][c]=saved; 
+    } 
+    /* if the number of solutions is 1, then increment the count of removed cells */
+    else {
+      removed++;
+    }
   }
-  if (removed < blanks) fprintf(stderr, "Warning: hanya bisa menghapus %d dari %d.\n", removed, blanks);
+
+  /* if the number of removed cells is less than the number of blanks, then print a warning */
+  if ( removed < blanks ) {
+    fprintf(stderr, "WARNING: Hanya bisa menghapus %d dari %d.\n", removed, blanks);
+  }
 }
 
+/**
+ * Check if a Sudoku board is full.
+ *
+ * This function takes a Sudoku board and checks if all
+ * cells are filled. If any cell is empty (i.e. its value
+ * is 0), then the function returns 0, indicating that the
+ * board is not full. Otherwise, the function returns 1,
+ * indicating that the board is full.
+ *
+ * @param a The Sudoku board to check.
+ * @return 1 if the board is full, 0 otherwise.
+ */
 int is_full(int a[N][N]) {
-  for (int i=0;i<N;i++) for (int j=0;j<N;j++) if (a[i][j]==0) return 0;
+  /* loop over all rows and columns */
+  for ( int i = 0; i < N; i++ ) {
+    for ( int j = 0; j < N; j++ ) {
+      /* if any cell is empty, then the board is not full */
+      if ( a[i][j] == 0 ) {
+        return 0;
+      }
+    }
+  }
+
+  /* if all cells are filled, then the board is full */
   return 1;
 }
 
+/**
+ * Main program for SudokuKita.
+ *
+ * This program takes a Sudoku board, randomly transforms it
+ * to create a new unique solution, and then generates a puzzle
+ * from that solution by removing some of the values.
+ *
+ * The program then enters an interactive loop where the user can
+ * input values for the puzzle, and the program will check if
+ * the values are correct and update the board accordingly.
+ *
+ * The program also allows the user to input 'reveal' to see the
+ * solution, or 'q' to quit the program.
+ *
+ * @param argc The number of command-line arguments.
+ * @param argv The command-line arguments.
+ * @return The exit status of the program.
+ */
 int main(int argc, char **argv) {
-  srand((unsigned)time(NULL));
+  srand( (unsigned)time(NULL) );
+
   int blanks = 6; /* default */
-  if (argc>=2) { int v = atoi(argv[1]); if (v>=0 && v<=16) blanks = v; }
+  if ( argc >= 2 ) {
+    int v = atoi(argv[1]);
+
+    if ( v >= 0 && v <= 16 ) {
+      blanks = v;
+    }
+  }
 
   int board[N][N];
   copy_board(board, base_solved);
@@ -408,7 +547,11 @@ int main(int argc, char **argv) {
   generate_puzzle(board, blanks);
 
   int given[N][N];
-  for (int i=0;i<N;i++) for (int j=0;j<N;j++) given[i][j] = (board[i][j] != 0);
+  for ( int i = 0; i < N; i++) {
+    for ( int j = 0; j < N; j++ ) {
+      given[i][j] = (board[i][j] != 0);
+    }
+  }
 
   char line[64];
 
@@ -419,7 +562,7 @@ int main(int argc, char **argv) {
   printf("=========================\n");
   // ? Petunjuk
   printf("Petunjuk bermain:\n");
-  printf("1. Masukkan dengan format seperti berikut\n"); 
+  printf("1. Masukan dengan format seperti berikut\n");
   printf("\n");
   printf("   ==> baris, kolom, nilai <==\n\n");
   printf("   Misalkan: 2 3 4\n");
@@ -433,24 +576,63 @@ int main(int argc, char **argv) {
   printf("\n");
 
   while (1) {
+    printf("\n=== ========== ===\n\n");
     print_board(board);
-    if (is_full(board)) { printf("Selamat! Selesai.\n"); break; }
-    printf("Masukkan: ");
-    if (!fgets(line, sizeof(line), stdin)) break;
-    int len = (int)strlen(line); while (len>0 && (line[len-1]=='\n' || line[len-1]=='\r')) { line[--len]=0; }
 
-    if (strcmp(line,"q")==0 || strcmp(line,"quit")==0) { printf("Keluar.\n"); break; }
-    if (strcmp(line,"reveal")==0 || strcmp(line,"r")==0) { printf("=== SOLUSI ===\n"); print_board(solution); break; }
+    if (is_full(board)) {
+      printf("Selamat! Selesai.\n");
+      break;
+    }
+
+    printf("\nMasukan: ");
+
+    if (!fgets(line, sizeof(line), stdin)) {
+      break;
+    }
+
+    int len = (int)strlen(line);
+    while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r' )) {
+      line[--len] = 0;
+    }
+
+    if (strcmp(line,"q") == 0 || strcmp(line,"quit") == 0) {
+      printf("\n\nKeluar.\n");
+      break;
+    }
+
+    if (strcmp(line,"reveal") == 0 || strcmp(line,"r") == 0) {
+      printf("\n=== SOLUSI ===\n\n");
+      print_board(solution);
+      break;
+    }
 
     int br, bc, bv;
     int n = sscanf(line, "%d %d %d", &br, &bc, &bv);
-    if (n!=3) { printf("Format salah. Contoh: 2 3 4\n"); continue; }
-    if (br<1||br>4||bc<1||bc>4||bv<1||bv>4) { printf("Nilai harus 1..4.\n"); continue; }
-    int r=br-1, c=bc-1, v=bv;
-    if (given[r][c]) { printf("Posisi (%d,%d) adalah given. Tidak bisa diubah.\n", br, bc); continue; }
-    if (solution[r][c] != v) { printf("Salah. Coba lagi.\n"); continue; }
-    board[r][c]=v;
-    printf("\nTerisi (%d,%d) = %d\n\n", br, bc, v);
+
+    if (n != 3) {
+      printf("\nFormat salah. Contoh: 2 3 4\n");
+      continue;
+    }
+
+    if (br < 1 || br > 4 || bc < 1 || bc > 4 || bv < 1 || bv > 4) {
+      printf("\nNilai harus 1 hingga 4.\n");
+      continue;
+    }
+
+    int r = br - 1, c = bc - 1, v = bv;
+    if (given[r][c]) {
+      printf("\nPosisi (%d,%d) adalah given. Tidak bisa diubah.\n\n", br, bc);
+      continue;
+    }
+
+    if (solution[r][c] != v) {
+      printf("\nSalah. Coba lagi.\n");
+      continue;
+    }
+
+    board[r][c] = v;
+
+    printf("\nTerisi (%d,%d) = %d\n", br, bc, v);
   }
 
   return 0;
