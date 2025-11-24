@@ -259,7 +259,26 @@ int main(int argc, char **argv) {
   for (int i=0;i<N;i++) for (int j=0;j<N;j++) given[i][j] = (board[i][j] != 0);
 
   char line[64];
-  printf("4x4 Sudoku. Perintah: 'baris kolom nilai' (mis: 2 3 4), 'reveal' untuk solusi, 'q' keluar.\n\n");
+
+  // Judul program improvisasi
+  // ? Judul awal
+  printf("=========================\n");
+  printf("|\tSUDOKU 4x4\t|\n");
+  printf("=========================\n");
+  // ? Petunjuk
+  printf("Petunjuk bermain:\n");
+  printf("1. Masukkan dengan format seperti berikut\n"); 
+  printf("\n");
+  printf("   ==> baris, kolom, nilai <==\n\n");
+  printf("   Misalkan: 2 3 4\n");
+  printf("   Baris 2, Kolom 3, dan Nilai 4\n");
+  printf("\n");
+  printf("2. Ketik 'reveal' untuk melihat solusi\n");
+  printf("3. Ketik 'q' untuk keluar\n");
+  printf("\n");
+  // ? judul akhir
+  printf("=== PERMAINAN DIMULAI ===\n");
+  printf("\n");
 
   while (1) {
     print_board(board);
@@ -279,7 +298,7 @@ int main(int argc, char **argv) {
     if (given[r][c]) { printf("Posisi (%d,%d) adalah given. Tidak bisa diubah.\n", br, bc); continue; }
     if (solution[r][c] != v) { printf("Salah. Coba lagi.\n"); continue; }
     board[r][c]=v;
-    printf("Terisi (%d,%d) = %d\n\n", br, bc, v);
+    printf("\nTerisi (%d,%d) = %d\n\n", br, bc, v);
   }
 
   return 0;
