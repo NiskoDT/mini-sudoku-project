@@ -8,6 +8,9 @@ Program dicompile dengan menggunakan `gcc`.
 
 Berikut adalah cara untuk compile dan run program ini:
 
+> [!WARNING]
+> Linux sedang dalam tahap percobaan, kemungkinan program tidak bisa dijalankan.
+
 1. Buka terminal dan arahkan direktori Anda ada di dalam direktori program ini.
 2. Ketikkan perintah sebegai berikut :
    1. Powershell (Windows):

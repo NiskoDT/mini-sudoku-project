@@ -424,7 +424,7 @@ int main(int argc, char **argv) {
   //   }
   // }
   
-  // // Launch in new window if requested
+  // Launch in new window if requested
   // if (launch_new_window) {
   //   launch_in_new_window(argc, argv);
   //   return 0;
