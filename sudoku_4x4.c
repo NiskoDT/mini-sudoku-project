@@ -427,14 +427,18 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  srand( (unsigned)time(NULL) );
+srand( (unsigned)time(NULL) );
 
   int blanks = 6; /* default */
-  if ( argc >= 2 ) {
-    int v = atoi(argv[1]);
-
-    if ( v >= 0 && v <= 16 ) {
-      blanks = v;
+  
+  // Parse command line arguments for difficulty level
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--in-window") != 0) {
+      int v = atoi(argv[i]);
+      if ( v >= 0 && v <= 16 ) {
+        blanks = v;
+        break; // Use first valid number found
+      }
     }
   }
 
