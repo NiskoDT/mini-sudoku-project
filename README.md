@@ -8,15 +8,18 @@ Program dicompile dengan menggunakan `gcc`.
 
 Berikut adalah cara untuk compile dan run program ini:
 
+> [!WARNING]
+> Linux sedang dalam tahap percobaan, kemungkinan tidak bisa berjalan.
+
 1. Buka terminal dan arahkan direktori Anda ada di dalam direktori program ini.
 2. Ketikkan perintah sebegai berikut :
-   1. Powershell (Windows):
+   - Powershell (Windows):
 
         ```C
         gcc -O2 -Wall -Wextra '.\sudoku_4x4.c' -o `.\sudoku.exe`
         ```
 
-   2. Terminal (Linux) _Untested_:
+   - Terminal (Linux) _Untested_:
 
         ```C
         gcc -O2 -Wall -Wextra './sudoku_4x4.c' -o './sudoku_4x4'
