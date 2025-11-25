@@ -1,3 +1,6 @@
+// TODO:
+// 1. Launch in new window if requested. Switch to the corresponding branch.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
