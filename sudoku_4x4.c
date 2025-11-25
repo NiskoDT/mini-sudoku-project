@@ -381,15 +381,96 @@ void clear_screen() {
 }
 
 /**
- * Launch Sudoku game in new window using PowerShell with fallback chain.
- * Tries pwsh first, then powershell, then cmd as final fallback.
+ * Detect available shell on Unix-like systems.
+ * Returns 1 if shell found, 0 otherwise.
  */
-void launch_in_new_window(int argc, char **argv) {
+int detect_shell(char* found_shell) {
+  const char* shell_list[] = {"bash", "zsh", "sh", "ksh", "csh", "fish", NULL};
+  
+  for (int i = 0; shell_list[i] != NULL; i++) {
+    char cmd[128];
+    #ifdef _WIN32
+      sprintf(cmd, "where %s >nul 2>&1", shell_list[i]);
+    #else
+      sprintf(cmd, "which %s > /dev/null 2>&1", shell_list[i]);
+    #endif
+    
+    if (system(cmd) == 0) {
+      strcpy(found_shell, shell_list[i]);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Launch Sudoku game in new window on Unix-like systems using shell.
+ */
+void launch_in_new_window_unix(int argc, char **argv) {
+  char shell[32];
+  if (!detect_shell(shell)) {
+    printf("Error: No compatible shell found for new window\n");
+    return;
+  }
+  
   // Build command line arguments string
   char args[256] = "";
-  if (argc > 1) {
-    sprintf(args, " %s", argv[1]);
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--in-window") != 0) {
+      sprintf(args + strlen(args), " %s", argv[i]);
+    }
   }
+  
+  char command[512];
+  sprintf(command, "%s -c './sudoku.exe%s --in-window; echo \"Press Enter to exit\"; read'", shell, args);
+  system(command);
+}
+
+/**
+ * Launch Sudoku game in new window on Windows using PowerShell with fallback chain.
+ */
+void launch_in_new_window_windows(int argc, char **argv) {
+  // Build command line arguments string
+  char args[256] = "";
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--in-window") != 0) {
+      sprintf(args + strlen(args), " %s", argv[i]);
+    }
+  }
+  
+  // Try PowerShell 7+ (pwsh) first
+  if (system("where pwsh >nul 2>&1") == 0) {
+    char command[512];
+    sprintf(command, "start pwsh -Command \"sudoku.exe%s --in-window; Read-Host 'Press Enter to exit'\"", args);
+    system(command);
+    return;
+  }
+  
+  // Try Windows PowerShell 5.1
+  if (system("where powershell >nul 2>&1") == 0) {
+    char command[512];
+    sprintf(command, "start powershell -Command \"sudoku.exe%s --in-window; Read-Host 'Press Enter to exit'\"", args);
+    system(command);
+    return;
+  }
+  
+  // Final fallback to cmd
+  char command[512];
+  sprintf(command, "start cmd /k sudoku.exe%s --in-window", args);
+  system(command);
+}
+
+
+/**
+ * Launch Sudoku game in new window using cross-platform approach.
+ */
+void launch_in_new_window(int argc, char **argv) {
+  #ifdef _WIN32
+    launch_in_new_window_windows(argc, argv);
+  #else
+    launch_in_new_window_unix(argc, argv);
+  #endif
+}
   
   // Try PowerShell 7+ (pwsh) first
   if (system("where pwsh >nul 2>&1") == 0) {
@@ -413,19 +494,19 @@ void launch_in_new_window(int argc, char **argv) {
 
 int main(int argc, char **argv) {
   // Check if we should launch in new window (no --in-window flag)
-  // int launch_new_window = 1;
-  // for (int i = 1; i < argc; i++) {
-  //   if (strcmp(argv[i], "--in-window") == 0) {
-  //     launch_new_window = 0;
-  //     break;
-  //   }
-  // }
+  int launch_new_window = 1;
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--in-window") == 0) {
+      launch_new_window = 0;
+      break;
+    }
+  }
   
-  // // Launch in new window if requested
-  // if (launch_new_window) {
-  //   launch_in_new_window(argc, argv);
-  //   return 0;
-  // }
+  // Launch in new window if requested
+  if (launch_new_window) {
+    launch_in_new_window(argc, argv);
+    return 0;
+  }
 
   srand( (unsigned)time(NULL) );
 
